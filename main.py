@@ -4,6 +4,7 @@ import logging
 import threading
 import time
 from telegram_bot import run_telegram_bot
+from keep_alive import keep_alive
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG,
@@ -16,6 +17,10 @@ def start_telegram_bot():
     run_telegram_bot()
 
 if __name__ == "__main__":
+    # Start keep-alive server
+    logger.info("Starting keep-alive server")
+    keep_alive()
+    
     # Start Telegram bot in background thread
     bot_thread = threading.Thread(target=start_telegram_bot)
     bot_thread.daemon = True
