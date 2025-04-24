@@ -5,6 +5,7 @@ import threading
 import time
 from telegram_bot import run_telegram_bot
 from keep_alive import keep_alive
+from auto_signals import start_signal_generator
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG,
@@ -25,6 +26,10 @@ logger.info("Starting Telegram bot thread")
 bot_thread = threading.Thread(target=start_telegram_bot)
 bot_thread.daemon = True
 bot_thread.start()
+
+# Start the signal generator
+logger.info("Starting signal generator")
+start_signal_generator()
 
 # When running with gunicorn, this part won't execute
 # But when running directly, it will start the Flask app
