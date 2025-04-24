@@ -16,16 +16,18 @@ def start_telegram_bot():
     logger.info("Starting Telegram bot")
     run_telegram_bot()
 
+# Start the keep-alive server
+logger.info("Starting keep-alive server")
+keep_alive()
+
+# Start Telegram bot in background thread
+logger.info("Starting Telegram bot thread")
+bot_thread = threading.Thread(target=start_telegram_bot)
+bot_thread.daemon = True
+bot_thread.start()
+
+# When running with gunicorn, this part won't execute
+# But when running directly, it will start the Flask app
 if __name__ == "__main__":
-    # Start keep-alive server
-    logger.info("Starting keep-alive server")
-    keep_alive()
-    
-    # Start Telegram bot in background thread
-    bot_thread = threading.Thread(target=start_telegram_bot)
-    bot_thread.daemon = True
-    bot_thread.start()
-    
-    # Start Flask app
-    logger.info("Starting web application")
+    logger.info("Starting web application directly")
     app.run(host='0.0.0.0', port=5000, debug=True)

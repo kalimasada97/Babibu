@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import time
 from telegram import Update
 from telegram.ext import Application, ContextTypes, CommandHandler, MessageHandler, filters
 from tracker import WinrateTracker
@@ -232,22 +233,50 @@ Current: {price}
         await update.message.reply_text(f"❌ Error: {str(e)}")
 
 def run_telegram_bot():
-    """Start the Telegram bot."""
-    # Create application
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    """
+    Start the Telegram bot in a way that works with threading.
+    This will work correctly when running in a separate thread.
+    """
+    logger.info("Starting telegram bot...")
     
-    # Register command handlers
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("stats", stats_command))
-    application.add_handler(CommandHandler("signal", signal_command))
-    application.add_handler(CommandHandler("log", log_command))
-    application.add_handler(CommandHandler("pair", pair_command))
-    application.add_handler(CommandHandler("backtest", backtest_command))
-    application.add_handler(CommandHandler("price", price_command))
-    
-    # Start the bot
-    application.run_polling()
+    while True:
+        try:
+            # Must create a new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            # Create application
+            application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+            
+            # Register command handlers
+            application.add_handler(CommandHandler("start", start_command))
+            application.add_handler(CommandHandler("help", help_command))
+            application.add_handler(CommandHandler("stats", stats_command))
+            application.add_handler(CommandHandler("signal", signal_command))
+            application.add_handler(CommandHandler("log", log_command))
+            application.add_handler(CommandHandler("pair", pair_command))
+            application.add_handler(CommandHandler("backtest", backtest_command))
+            application.add_handler(CommandHandler("price", price_command))
+            
+            # Run the application with our own event loop
+            # Disable signal handlers which cause issues in threads
+            logger.info("Starting Telegram bot with custom polling")
+            application.run_polling(
+                allowed_updates=Update.ALL_TYPES,
+                drop_pending_updates=True,
+                close_loop=False,
+                stop_signals=None  # Disable signal handling
+            )
+            
+            # If we get here, the bot exited normally, just break the loop
+            break
+            
+        except Exception as e:
+            logger.error(f"Error in Telegram bot: {str(e)}")
+            logger.info("Waiting 60 seconds before retrying...")
+            time.sleep(60)
+            
+    logger.info("Telegram bot stopped")
 
 if __name__ == "__main__":
     run_telegram_bot()
