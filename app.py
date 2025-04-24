@@ -39,6 +39,11 @@ with app.app_context():
     db.create_all()
 
 # Routes
+@app.route('/alive')
+def alive():
+    """Endpoint for uptime monitoring services"""
+    return "Bot Aktif - Crypto Trading Signal Tracker Running"
+
 @app.route('/')
 def index():
     tracker = WinrateTracker()

@@ -107,18 +107,22 @@ class BinanceAPI:
             # Generate timestamps
             if timeframe.endswith('m'):
                 # Minutes
-                freq = f"{timeframe[:-1]}min"
+                minutes = int(timeframe[:-1])
+                freq = f"{minutes}min"
             elif timeframe.endswith('h'):
                 # Hours
-                freq = f"{timeframe[:-1]}H"
+                hours = int(timeframe[:-1])
+                freq = f"{hours}h"
             elif timeframe.endswith('d'):
                 # Days
-                freq = f"{timeframe[:-1]}D"
+                days_val = int(timeframe[:-1])
+                freq = f"{days_val}d"
             elif timeframe.endswith('w'):
                 # Weeks
-                freq = f"{timeframe[:-1]}W"
+                weeks = int(timeframe[:-1])
+                freq = f"{weeks}w"
             else:
-                freq = '4H'  # Default
+                freq = '4h'  # Default
                 
             timestamps = pd.date_range(start=start_date, end=end_date, freq=freq)
             

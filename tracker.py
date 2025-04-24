@@ -299,7 +299,10 @@ class WinrateTracker:
         exit_price = None
         exit_idx = None
         
-        for idx, row in future_data.iterrows():
+        # Convert to integer index to avoid Timestamp arithmetic issues
+        start_idx_int = start_idx
+        
+        for i, (idx, row) in enumerate(future_data.iterrows()):
             high = row['high']
             low = row['low']
             
@@ -308,14 +311,14 @@ class WinrateTracker:
                 if low <= sl:
                     outcome = 'LOSS'
                     exit_price = sl
-                    exit_idx = idx
+                    exit_idx = i
                     break
                 
                 # Check if take profit hit
                 if high >= tp1:
                     outcome = 'WIN'
                     exit_price = tp1
-                    exit_idx = idx
+                    exit_idx = i
                     break
             
             elif direction == 'SHORT':
@@ -323,20 +326,20 @@ class WinrateTracker:
                 if high >= sl:
                     outcome = 'LOSS'
                     exit_price = sl
-                    exit_idx = idx
+                    exit_idx = i
                     break
                 
                 # Check if take profit hit
                 if low <= tp1:
                     outcome = 'WIN'
                     exit_price = tp1
-                    exit_idx = idx
+                    exit_idx = i
                     break
         
         # If no exit found (end of data), use last price
         if outcome == 'PENDING':
             exit_price = future_data.iloc[-1]['close']
-            exit_idx = future_data.index[-1]
+            exit_idx = len(future_data) - 1
             
             # Determine outcome based on price movement
             if direction == 'LONG':
@@ -357,8 +360,8 @@ class WinrateTracker:
         # Calculate risk-reward ratio
         rr = reward / risk if risk > 0 else 0
         
-        # Calculate duration
-        duration = (exit_idx - start_idx) if exit_idx is not None else 0
+        # Calculate duration (using integer index to avoid Timestamp arithmetic)
+        duration = exit_idx  # This represents candles, which is a good proxy for duration
         
         return {
             'outcome': outcome,
