@@ -6,7 +6,18 @@ import time
 from telegram_bot import run_telegram_bot
 from keep_alive import keep_alive
 from auto_signals import start_signal_generator
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--scan', action='store_true')
+args = parser.parse_args()
+
+if args.scan:
+    # Jalankan scan tanpa polling
+    asyncio.run(scan_all())
+else:
+    # Mode normal
+    application.run_polling()
 # Set up logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
