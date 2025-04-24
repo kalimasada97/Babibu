@@ -1,0 +1,289 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-dark">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-flask text-info me-2"></i>
+                    Backtest Trading Strategies
+                </h2>
+                <p class="card-text">Run backtests on historical data to evaluate strategy performance</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backtest Form -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-cogs me-2"></i>Backtest Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/backtest">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="pair" class="form-label">Trading Pair</label>
+                            <input type="text" class="form-control" id="pair" name="pair" placeholder="e.g. BTCUSDT" required>
+                            <div class="form-text">Enter the trading pair to backtest</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="days" class="form-label">Period (Days)</label>
+                            <input type="number" class="form-control" id="days" name="days" value="90" min="7" max="365" required>
+                            <div class="form-text">Historical data period</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="timeframe" class="form-label">Timeframe</label>
+                            <select class="form-select" id="timeframe" name="timeframe">
+                                <option value="1h">1 Hour</option>
+                                <option value="4h" selected>4 Hours</option>
+                                <option value="1d">1 Day</option>
+                                <option value="1w">1 Week</option>
+                            </select>
+                            <div class="form-text">Candle timeframe</div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-play me-2"></i>Run Backtest
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backtest Results -->
+{% if result %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Backtest Results</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Overview Card -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Strategy Overview</h5>
+                                <p class="card-text">
+                                    Moving Average Crossover strategy backtested on <strong>{{ result.pair }}</strong> 
+                                    using <strong>{{ result.timeframe }}</strong> timeframe for <strong>{{ result.period }}</strong>.
+                                </p>
+                                <p class="card-text">
+                                    Total signals generated: <strong>{{ result.total_signals }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Metrics Card -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Key Performance Metrics</h5>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Winrate:</span>
+                                    <span class="fw-bold">{{ "%.1f"|format(result.winrate) }}%</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Average Risk/Reward:</span>
+                                    <span class="fw-bold">{{ "%.2f"|format(result.avg_rr) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Best Return:</span>
+                                    <span class="fw-bold text-success">{{ "%.2f"|format(result.best_case) }}%</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Worst Return:</span>
+                                    <span class="fw-bold text-danger">{{ "%.2f"|format(result.worst_case) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Visualization -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <h5 class="card-title">Performance Visualization</h5>
+                                <canvas id="backtestChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Strategy Analysis -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <h5 class="card-title">Strategy Analysis</h5>
+                                <p>
+                                    This backtest uses a simple <strong>Moving Average Crossover</strong> strategy:
+                                </p>
+                                <ul>
+                                    <li><strong>Entry Signal:</strong> When the short-term MA (20 periods) crosses above/below the long-term MA (50 periods)</li>
+                                    <li><strong>Exit Conditions:</strong> Take profit at predefined level or stop loss</li>
+                                    <li><strong>Risk Management:</strong> 5% stop loss from entry</li>
+                                </ul>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Analysis:</strong> 
+                                    {% if result.winrate >= 60 %}
+                                    This strategy shows strong performance on {{ result.pair }} with a high winrate of {{ "%.1f"|format(result.winrate) }}%. 
+                                    The risk-reward ratio of {{ "%.2f"|format(result.avg_rr) }} indicates efficient use of capital.
+                                    {% elif result.winrate >= 50 %}
+                                    This strategy shows moderate performance on {{ result.pair }} with a winrate of {{ "%.1f"|format(result.winrate) }}%.
+                                    Consider optimizing parameters or combining with other indicators.
+                                    {% else %}
+                                    This strategy does not perform well on {{ result.pair }} with the current parameters.
+                                    Consider testing different timeframes or modifying the strategy rules.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Strategy Library -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-book me-2"></i>Strategy Library</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Moving Average Crossover</h5>
+                                <p class="card-text">
+                                    A trend-following strategy that generates signals when fast and slow moving 
+                                    averages cross each other.
+                                </p>
+                                <div class="text-end">
+                                    <span class="badge bg-success">Currently Used</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">RSI Divergence</h5>
+                                <p class="card-text">
+                                    Detects divergence between price action and RSI momentum indicator to find
+                                    potential reversal points.
+                                </p>
+                                <div class="text-end">
+                                    <span class="badge bg-secondary">Coming Soon</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Support & Resistance</h5>
+                                <p class="card-text">
+                                    Identifies key support and resistance levels and generates signals on 
+                                    bounces or breakouts.
+                                </p>
+                                <div class="text-end">
+                                    <span class="badge bg-secondary">Coming Soon</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if result %}
+    // Create visualization chart for backtest results
+    const ctx = document.getElementById('backtestChart').getContext('2d');
+    
+    const backtestChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Winrate', 'Avg R/R', 'Best Case', 'Worst Case'],
+            datasets: [{
+                label: '{{ result.pair }} Performance',
+                data: [
+                    {{ result.winrate }},
+                    {{ result.avg_rr }} * 20, // Scaling for visibility
+                    {{ result.best_case }},
+                    {{ result.worst_case }}
+                ],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(255, 99, 132, 0.6)'
+                ],
+                borderColor: [
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)',
+                    'rgb(75, 192, 192)',
+                    'rgb(255, 99, 132)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Percentage / Value'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            let value = context.raw;
+                            
+                            if (context.dataIndex === 1) {
+                                // For R/R, unscale the value
+                                value = value / 20;
+                                return `${label}: ${value.toFixed(2)}`;
+                            }
+                            
+                            return `${label}: ${value.toFixed(2)}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

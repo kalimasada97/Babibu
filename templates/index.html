@@ -1,0 +1,240 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card bg-dark">
+            <div class="card-body">
+                <h2 class="card-title"><i class="fas fa-chart-pie text-info me-2"></i>Trading Performance Dashboard</h2>
+                <p class="card-text">Track your crypto trading signals, calculate winrate, and analyze performance.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Overall Performance Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Overall Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Winrate (30 days):</span>
+                    <span class="fw-bold">{{ "%.1f"|format(global_stats.winrate) }}%</span>
+                </div>
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ global_stats.winrate }}%;" aria-valuenow="{{ global_stats.winrate }}" aria-valuemin="0" aria-valuemax="100">{{ "%.1f"|format(global_stats.winrate) }}%</div>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Trades:</span>
+                    <span class="fw-bold">{{ global_stats.total_trades }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Avg. Duration:</span>
+                    <span class="fw-bold">{{ "%.1f"|format(global_stats.avg_duration_mins) }} mins</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Current Win Streak:</span>
+                    <span class="fw-bold">{{ global_stats.recent_win_streak }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Weighted Winrate:</span>
+                    <span class="fw-bold">{{ "%.1f"|format(global_stats.weighted_winrate) }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winrate Chart Card -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Performance Metrics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="winrateChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Signals Table -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-secondary bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>Recent Signals</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Pair</th>
+                                <th>Direction</th>
+                                <th>Entry</th>
+                                <th>Outcome</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for signal in recent_signals %}
+                            <tr>
+                                <td>{{ signal.id }}</td>
+                                <td>{{ signal.pair }}</td>
+                                <td>
+                                    {% if signal.direction == 'LONG' %}
+                                    <span class="badge bg-success">LONG</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">SHORT</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ signal.entry }}</td>
+                                <td>
+                                    {% if signal.outcome == 'WIN' %}
+                                    <span class="badge bg-success">WIN</span>
+                                    {% elif signal.outcome == 'LOSS' %}
+                                    <span class="badge bg-danger">LOSS</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">PENDING</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ signal.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No recent signals</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="/signals" class="btn btn-outline-info btn-sm">View All Signals</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performing Pairs -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-trophy me-2"></i>Top Performing Pairs</h5>
+            </div>
+            <div class="card-body">
+                {% if top_pairs %}
+                <ul class="list-group">
+                    {% for pair in top_pairs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-coins me-2 text-warning"></i>
+                            <span>{{ pair.pair }}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success rounded-pill">{{ "%.1f"|format(pair.winrate) }}%</span>
+                            <small class="text-muted ms-2">({{ pair.trades }} trades)</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center">No pair performance data available yet</p>
+                {% endif %}
+                <div class="text-end mt-3">
+                    <a href="/pairs" class="btn btn-outline-success btn-sm">View All Pairs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Telegram Bot Integration Card -->
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning bg-opacity-75 text-dark">
+                <h5 class="card-title mb-0"><i class="fab fa-telegram me-2"></i>Telegram Bot Integration</h5>
+            </div>
+            <div class="card-body">
+                <p>Use the Telegram bot to manage signals and view statistics on the go.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Available Commands:</h6>
+                        <ul>
+                            <li><code>/stats</code> - View overall performance statistics</li>
+                            <li><code>/signal &lt;pair&gt; &lt;direction&gt; &lt;entry&gt; &lt;tp1&gt; &lt;sl&gt;</code> - Log a new signal</li>
+                            <li><code>/log &lt;signal_id&gt; &lt;price&gt;</code> - Update signal outcome</li>
+                            <li><code>/pair &lt;pair_name&gt;</code> - View performance for a specific pair</li>
+                            <li><code>/backtest &lt;pair&gt; &lt;days&gt;</code> - Run backtest on a pair</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fab fa-telegram fa-4x text-info"></i>
+                                </div>
+                                <p>Bot is running 24/7</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sample data for chart - this would be replaced with real data from API
+    const ctx = document.getElementById('winrateChart').getContext('2d');
+    
+    // Fetch winrate data from API
+    fetch('/api/winrate')
+        .then(response => response.json())
+        .then(data => {
+            // Create chart
+            const winrateChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Winrate', 'Weighted Winrate'],
+                    datasets: [{
+                        label: 'Performance (%)',
+                        data: [data.winrate, data.weighted_winrate],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgb(75, 192, 192)',
+                            'rgb(153, 102, 255)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching winrate data:', error));
+});
+</script>
+{% endblock %}

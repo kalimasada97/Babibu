@@ -1,0 +1,117 @@
+/* Custom styles for Crypto Signal Tracker */
+
+/* Card hover effects */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Badge styles */
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.6em;
+}
+
+/* Custom progress bar heights */
+.progress {
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+/* Custom chart container */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 300px;
+    width: 100%;
+}
+
+/* Navbar brand icon */
+.navbar-brand i {
+    font-size: 1.2rem;
+}
+
+/* Table styles */
+.table-hover tbody tr:hover {
+    background-color: rgba(40, 167, 227, 0.1);
+}
+
+/* Custom card header colors */
+.card-header.bg-primary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Stats number styles */
+.display-4 {
+    font-weight: 600;
+}
+
+/* Footer styles */
+.footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom alert styles */
+.alert {
+    border-left-width: 4px;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+
+.alert-success {
+    border-left-color: #198754;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+/* Status indicators */
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-active {
+    background-color: #28a745;
+    box-shadow: 0 0 5px #28a745;
+}
+
+/* Custom form control focus */
+.form-control:focus, .form-select:focus {
+    border-color: #0dcaf0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25);
+}
+
+/* Custom animation for loading spinner */
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite ease-in-out;
+}

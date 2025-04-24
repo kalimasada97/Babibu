@@ -1,0 +1,308 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-dark">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-coins text-warning me-2"></i>
+                    Trading Pair Performance
+                </h2>
+                <p class="card-text">View performance metrics for each trading pair</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-info bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Winrate by Pair</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="winrateByPairChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Trade Volume by Pair</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="volumeByPairChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pairs Table -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-table me-2"></i>Trading Pairs</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover" id="pairsTable">
+                        <thead>
+                            <tr>
+                                <th>Pair</th>
+                                <th>Total Trades</th>
+                                <th>Winrate</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pair in pairs %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-coins text-warning me-2"></i>
+                                    {{ pair.pair }}
+                                </td>
+                                <td>{{ pair.trades }}</td>
+                                <td>{{ "%.1f"|format(pair.winrate) }}%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        {% if pair.winrate >= 70 %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ pair.winrate }}%;" aria-valuenow="{{ pair.winrate }}" aria-valuemin="0" aria-valuemax="100">{{ "%.1f"|format(pair.winrate) }}%</div>
+                                        {% elif pair.winrate >= 50 %}
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ pair.winrate }}%;" aria-valuenow="{{ pair.winrate }}" aria-valuemin="0" aria-valuemax="100">{{ "%.1f"|format(pair.winrate) }}%</div>
+                                        {% elif pair.winrate >= 30 %}
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ pair.winrate }}%;" aria-valuenow="{{ pair.winrate }}" aria-valuemin="0" aria-valuemax="100">{{ "%.1f"|format(pair.winrate) }}%</div>
+                                        {% else %}
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ pair.winrate }}%;" aria-valuenow="{{ pair.winrate }}" aria-valuemin="0" aria-valuemax="100">{{ "%.1f"|format(pair.winrate) }}%</div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No pair data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pair Comparison Card -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-warning bg-opacity-75 text-dark">
+                <h5 class="card-title mb-0"><i class="fas fa-exchange-alt me-2"></i>Pair Performance Comparison</h5>
+            </div>
+            <div class="card-body">
+                <form id="compareForm" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="pair1" class="form-label">First Pair</label>
+                        <select class="form-select" id="pair1">
+                            <option value="">Select a pair</option>
+                            {% for pair in pairs %}
+                            <option value="{{ pair.pair }}">{{ pair.pair }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="pair2" class="form-label">Second Pair</label>
+                        <select class="form-select" id="pair2">
+                            <option value="">Select a pair</option>
+                            {% for pair in pairs %}
+                            <option value="{{ pair.pair }}">{{ pair.pair }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Compare</button>
+                    </div>
+                </form>
+                
+                <div id="comparisonResult" class="mt-4 d-none">
+                    <h5 class="text-center mb-4">Comparison Results</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-dark">
+                                <div class="card-body">
+                                    <h6 class="card-title" id="pair1Name">Pair #1</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Winrate:</span>
+                                        <span id="pair1Winrate" class="fw-bold">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Trades:</span>
+                                        <span id="pair1Trades" class="fw-bold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark">
+                                <div class="card-body">
+                                    <h6 class="card-title" id="pair2Name">Pair #2</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Winrate:</span>
+                                        <span id="pair2Winrate" class="fw-bold">-</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Trades:</span>
+                                        <span id="pair2Trades" class="fw-bold">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prepare data for charts
+    const pairs = [];
+    const winrates = [];
+    const tradeCounts = [];
+    const backgroundColors = [];
+    
+    // Extract data from the table
+    const tableRows = document.querySelectorAll('#pairsTable tbody tr');
+    tableRows.forEach(row => {
+        if (row.cells.length >= 3) {
+            const pair = row.cells[0].textContent.trim();
+            const trades = parseInt(row.cells[1].textContent);
+            const winrate = parseFloat(row.cells[2].textContent);
+            
+            pairs.push(pair);
+            winrates.push(winrate);
+            tradeCounts.push(trades);
+            
+            // Generate random colors for charts
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            backgroundColors.push(`rgba(${r}, ${g}, ${b}, 0.7)`);
+        }
+    });
+    
+    // Create the Winrate by Pair chart
+    if (pairs.length > 0) {
+        const winrateCtx = document.getElementById('winrateByPairChart').getContext('2d');
+        const winrateChart = new Chart(winrateCtx, {
+            type: 'bar',
+            data: {
+                labels: pairs,
+                datasets: [{
+                    label: 'Winrate (%)',
+                    data: winrates,
+                    backgroundColor: backgroundColors,
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        
+        // Create the Trade Volume by Pair chart
+        const volumeCtx = document.getElementById('volumeByPairChart').getContext('2d');
+        const volumeChart = new Chart(volumeCtx, {
+            type: 'pie',
+            data: {
+                labels: pairs,
+                datasets: [{
+                    label: 'Number of Trades',
+                    data: tradeCounts,
+                    backgroundColor: backgroundColors,
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Handle pair comparison form
+    document.getElementById('compareForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const pair1 = document.getElementById('pair1').value;
+        const pair2 = document.getElementById('pair2').value;
+        
+        if (!pair1 || !pair2) {
+            alert('Please select two pairs to compare');
+            return;
+        }
+        
+        // Find pairs in the table data
+        let pair1Data = null;
+        let pair2Data = null;
+        
+        tableRows.forEach(row => {
+            if (row.cells.length >= 3) {
+                const pairName = row.cells[0].textContent.trim();
+                const trades = parseInt(row.cells[1].textContent);
+                const winrate = parseFloat(row.cells[2].textContent);
+                
+                if (pairName.includes(pair1)) {
+                    pair1Data = { name: pairName, trades, winrate };
+                }
+                
+                if (pairName.includes(pair2)) {
+                    pair2Data = { name: pairName, trades, winrate };
+                }
+            }
+        });
+        
+        // Display comparison results
+        if (pair1Data && pair2Data) {
+            document.getElementById('comparisonResult').classList.remove('d-none');
+            
+            document.getElementById('pair1Name').textContent = pair1Data.name;
+            document.getElementById('pair1Winrate').textContent = pair1Data.winrate + '%';
+            document.getElementById('pair1Trades').textContent = pair1Data.trades;
+            
+            document.getElementById('pair2Name').textContent = pair2Data.name;
+            document.getElementById('pair2Winrate').textContent = pair2Data.winrate + '%';
+            document.getElementById('pair2Trades').textContent = pair2Data.trades;
+            
+            // Highlight better performing pair
+            if (pair1Data.winrate > pair2Data.winrate) {
+                document.getElementById('pair1Winrate').classList.add('text-success');
+                document.getElementById('pair2Winrate').classList.remove('text-success');
+            } else if (pair2Data.winrate > pair1Data.winrate) {
+                document.getElementById('pair2Winrate').classList.add('text-success');
+                document.getElementById('pair1Winrate').classList.remove('text-success');
+            } else {
+                document.getElementById('pair1Winrate').classList.remove('text-success');
+                document.getElementById('pair2Winrate').classList.remove('text-success');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

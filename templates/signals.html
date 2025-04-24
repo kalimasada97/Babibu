@@ -1,0 +1,277 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-dark">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-signal text-success me-2"></i>
+                    Trading Signals
+                </h2>
+                <p class="card-text">View and manage all your trading signals</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="pairFilter" class="form-label">Pair</label>
+                        <input type="text" class="form-control" id="pairFilter" placeholder="e.g. BTCUSDT">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="directionFilter" class="form-label">Direction</label>
+                        <select class="form-select" id="directionFilter">
+                            <option value="">All</option>
+                            <option value="LONG">LONG</option>
+                            <option value="SHORT">SHORT</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="outcomeFilter" class="form-label">Outcome</label>
+                        <select class="form-select" id="outcomeFilter">
+                            <option value="">All</option>
+                            <option value="WIN">WIN</option>
+                            <option value="LOSS">LOSS</option>
+                            <option value="PENDING">PENDING</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signals Table -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-table me-2"></i>Trading Signals</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Pair</th>
+                                <th>Direction</th>
+                                <th>Entry</th>
+                                <th>TP1</th>
+                                <th>SL</th>
+                                <th>R:R</th>
+                                <th>Outcome</th>
+                                <th>Closed At</th>
+                                <th>Duration</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for signal in signals.items %}
+                            <tr>
+                                <td>{{ signal.id }}</td>
+                                <td>{{ signal.pair }}</td>
+                                <td>
+                                    {% if signal.direction == 'LONG' %}
+                                    <span class="badge bg-success">LONG</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">SHORT</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ signal.entry }}</td>
+                                <td>{{ signal.tp1 }}</td>
+                                <td>{{ signal.sl }}</td>
+                                <td>{{ "%.2f"|format(signal.risk_reward_ratio) }}</td>
+                                <td>
+                                    {% if signal.outcome == 'WIN' %}
+                                    <span class="badge bg-success">WIN</span>
+                                    {% elif signal.outcome == 'LOSS' %}
+                                    <span class="badge bg-danger">LOSS</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">PENDING</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ signal.closed_at if signal.closed_at else '-' }}</td>
+                                <td>{{ signal.duration if signal.duration else '-' }}</td>
+                                <td>{{ signal.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="11" class="text-center">No signals found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if signals.pages > 1 %}
+                <nav aria-label="Signals pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if signals.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('signals', page=signals.prev_num) }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in signals.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num == signals.page %}
+                                <li class="page-item active">
+                                    <a class="page-link" href="{{ url_for('signals', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('signals', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#">...</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if signals.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('signals', page=signals.next_num) }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signal Stats Summary -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info bg-opacity-75">
+                <h5 class="card-title mb-0"><i class="fas fa-calculator me-2"></i>Signal Statistics Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Overall Stats -->
+                    <div class="col-md-4">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Total Signals</h5>
+                                <h2 class="display-4 mb-0">{{ signals.total }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Win/Loss Stats -->
+                    <div class="col-md-4">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Win Rate</h5>
+                                <div id="winRateDisplay">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Average Duration -->
+                    <div class="col-md-4">
+                        <div class="card bg-dark h-100">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Avg. Duration</h5>
+                                <div id="avgDurationDisplay">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch signal stats for display
+    fetch('/api/winrate')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('winRateDisplay').innerHTML = 
+                `<h2 class="display-4 mb-0">${data.winrate.toFixed(1)}%</h2>`;
+            
+            document.getElementById('avgDurationDisplay').innerHTML = 
+                `<h2 class="display-4 mb-0">${data.avg_duration_mins.toFixed(0)} mins</h2>`;
+        })
+        .catch(error => {
+            console.error('Error fetching stats:', error);
+            document.getElementById('winRateDisplay').innerHTML = '<p class="text-danger">Error loading data</p>';
+            document.getElementById('avgDurationDisplay').innerHTML = '<p class="text-danger">Error loading data</p>';
+        });
+    
+    // Handle form filtering
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const pair = document.getElementById('pairFilter').value.toUpperCase();
+        const direction = document.getElementById('directionFilter').value;
+        const outcome = document.getElementById('outcomeFilter').value;
+        
+        // Filter the table rows
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            let showRow = true;
+            
+            if (pair && !row.cells[1].textContent.includes(pair)) {
+                showRow = false;
+            }
+            
+            if (direction && !row.cells[2].textContent.includes(direction)) {
+                showRow = false;
+            }
+            
+            if (outcome && !row.cells[7].textContent.includes(outcome)) {
+                showRow = false;
+            }
+            
+            row.style.display = showRow ? '' : 'none';
+        });
+    });
+});
+</script>
+{% endblock %}
